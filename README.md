@@ -4,13 +4,15 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![RHEL 9](https://img.shields.io/badge/RHEL-9.x-red.svg)](https://www.redhat.com/en/enterprise-linux)
+[![RHEL 9](https://img.shields.io/badge/RHEL-10-red.svg)](https://www.redhat.com/en/enterprise-linux)
 
 ## 🚀 Quick Start
 
+**📋 Recommended AWS Setup**: `g5.4xlarge` EC2 instance with RHEL 10 and 200GB storage
+
 ### For New Systems (Complete Setup)
 ```bash
-# 1. Run quick installation (on fresh RHEL 9.x with GPU)
+# 1. Run quick installation (on fresh RHEL 10 with GPU)
 curl -sSL https://raw.githubusercontent.com/YOUR_REPO/rhaiis-demo/main/quick-install.sh | bash
 
 # 2. Reboot system to load GPU drivers
@@ -113,14 +115,16 @@ Each query demonstrates the AI agent's ability to:
 ## 📋 Prerequisites
 
 ### Hardware Requirements
-- **AWS EC2**: `g4dn.2xlarge` or larger recommended
-- **GPU**: NVIDIA T4, A10G, or better (6GB+ VRAM)
-- **RAM**: 16GB+ (32GB recommended)
-- **Storage**: 200GB+ available disk space
-- **CPU**: 8+ cores
+- **AWS EC2**: `g5.4xlarge` recommended for optimal performance
+- **GPU**: NVIDIA A10G (24GB VRAM) included with g5.4xlarge
+- **vCPUs**: 16 cores
+- **RAM**: 64GB
+- **Storage**: 200GB+ EBS volume recommended
+- **Network**: Enhanced networking enabled
+
 
 ### Software Requirements
-- **OS**: Red Hat Enterprise Linux 9.x, Rocky Linux 9.x, or CentOS Stream 9
+- **OS**: Red Hat Enterprise Linux 10, Rocky Linux 10, or CentOS Stream 10
 - **Accounts**: Red Hat Developer account (free)
 - **Network**: Internet access for package and model downloads
 
@@ -137,7 +141,7 @@ sudo dnf install -y git tmux wget curl python3 python3-pip podman
 ```bash
 # Add NVIDIA repository
 sudo dnf config-manager --add-repo \
-  https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
+  https://developer.download.nvidia.com/compute/cuda/repos/rhel10/x86_64/cuda-rhel10.repo
 
 # Install GPU drivers (bypass GPG if needed)
 sudo dnf install -y --nogpgcheck nvidia-driver nvidia-dkms cuda-drivers
@@ -272,15 +276,15 @@ For complete troubleshooting guide, see [TROUBLESHOOTING.md](app/TROUBLESHOOTING
 ### Expected Performance
 - **AI Response Time**: 2-5 seconds for business queries
 - **Database Queries**: <500ms for CRM data retrieval
-- **Memory Usage**: ~12GB RAM, ~6GB GPU VRAM
+- **Memory Usage**: ~15GB RAM, ~8GB GPU VRAM
 - **Model Loading**: 2-5 minutes first time, 30s subsequent starts
 
 ### Resource Utilization
 | Component | CPU Usage | RAM Usage | GPU VRAM |
 |-----------|-----------|-----------|----------|
-| PostgreSQL | 10-20% | 2GB | - |
-| Granite Model | 50-80% | 8GB | 6GB |
-| Flask API | 5-10% | 1GB | - |
+| PostgreSQL | 5-10% | 2GB | - |
+| Granite Model | 25-40% | 12GB | 8GB |
+| Flask API | 2-5% | 1GB | - |
 
 ## 🏗️ Architecture Details
 
