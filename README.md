@@ -21,13 +21,17 @@ Create a `g5.4xlarge` EC2 instance with:
 - **Security Group**: Allow SSH (port 22) and HTTP (port 5000)
 - **Key Pair**: For SSH access
 
-### Step 2: System Setup and GPU Drivers
+### Step 2: Clone Repository and Run Setup
 ```bash
 # SSH into your instance
 ssh -i your-key.pem ec2-user@your-instance-ip
 
-# Run the automated setup script
-curl -sSL https://raw.githubusercontent.com/YOUR_REPO/rhaiis-demo/main/quick-install.sh | bash
+# Clone the demo repository
+git clone https://github.com/rh-aiservices-bu/rhaiis-demo.git
+cd rhaiis-demo
+
+# Run the automated setup script (installs GPU drivers and dependencies)
+./quick-install.sh
 
 # Reboot to load GPU drivers (CRITICAL!)
 sudo reboot
@@ -37,9 +41,6 @@ sudo reboot
 ```bash
 # SSH back in after reboot
 ssh -i your-key.pem ec2-user@your-instance-ip
-
-# Clone the demo repository
-git clone https://github.com/YOUR_REPO/rhaiis-demo.git
 cd rhaiis-demo/app
 
 # Authenticate with Red Hat registry
@@ -73,7 +74,7 @@ If your system already has GPU drivers and container runtime:
 
 ```bash
 # Quick deployment only
-git clone https://github.com/YOUR_REPO/rhaiis-demo.git
+git clone https://github.com/rh-aiservices-bu/rhaiis-demo.git
 cd rhaiis-demo/app
 sudo podman login registry.redhat.io
 ./deploy.sh
