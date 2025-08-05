@@ -19,7 +19,12 @@ sudo reboot
 
 # After reboot, deploy the demo
 cd rhaiis-demo/app
-sudo podman login registry.redhat.io  # Use your Red Hat credentials
+
+# ⚠️ IMPORTANT: Login to Red Hat registry (REQUIRED)
+sudo podman login registry.redhat.io
+# Enter your Red Hat account username and password
+
+# Deploy the demo
 ./deploy.sh
 ```
 
@@ -27,12 +32,15 @@ sudo podman login registry.redhat.io  # Use your Red Hat credentials
 
 ### Hardware
 - **Recommended**: AWS EC2 `g5.4xlarge` instance (16 vCPU, 64GB RAM, NVIDIA A10G GPU)
+- **Minimum**: System with NVIDIA GPU (8GB+ VRAM recommended)
 - **Storage**: 200GB+ SSD recommended
 - **GPU**: NVIDIA GPU with at least 8GB VRAM for Granite model inference
 
 ### Software
 - **OS**: Red Hat Enterprise Linux 10.x
-- **Access**: Red Hat subscription (for container registry access)
+- **Access**: **Red Hat subscription with registry access** (required for container images)
+
+⚠️ **Red Hat Account Required**: You need a valid Red Hat account to access the container registry. The demo uses Red Hat certified container images.
 
 ## Installation
 
@@ -94,11 +102,27 @@ You should see your GPU listed with driver information.
 
 ## Deployment
 
-### 1. Login to Red Hat Registry
+### 1. Login to Red Hat Registry (REQUIRED)
+
+⚠️ **Critical Step**: Before deployment, you MUST login to the Red Hat container registry:
+
 ```bash
 sudo podman login registry.redhat.io
 ```
-Use your Red Hat account credentials.
+
+**When prompted, enter:**
+- **Username**: Your Red Hat account username
+- **Password**: Your Red Hat account password
+
+**Why this is required:**
+- The demo uses Red Hat certified PostgreSQL container images
+- Red Hat registry requires authentication for access
+- Without login, deployment will fail with authentication errors
+
+**Don't have a Red Hat account?**
+- Create one at: https://access.redhat.com/
+- Free developer accounts are available
+- Required for accessing Red Hat container registry
 
 ### 2. Deploy the Demo
 ```bash
@@ -107,14 +131,21 @@ cd rhaiis-demo/app
 ```
 
 The deployment script will:
+- Install Python dependencies (PyTorch, Transformers, etc.)
 - Start PostgreSQL database with sample CRM data
-- Launch vLLM server with IBM Granite model
+- Load IBM Granite model with GPU acceleration
 - Start Flask API server for the AI agent
 
 ### 3. Verify Deployment
 ```bash
 ./test_api.sh
 ```
+
+This comprehensive test suite validates:
+- Service health and API endpoints
+- Database connectivity and data access
+- AI agent intelligence and business analysis
+- GPU acceleration and system performance
 
 ## Usage
 
@@ -127,16 +158,15 @@ curl http://localhost:5000/health
 
 **Chat with AI Agent:**
 ```bash
-curl -X POST http://localhost:5000/chat \
+curl -X POST http://localhost:5000/agent/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "Show me our top 5 sales opportunities"}'
 ```
 
 **Database Endpoints:**
-- `GET /opportunities` - List sales opportunities
-- `GET /support_cases` - List support cases  
-- `GET /accounts/{account_id}` - Get account details
-- `POST /accounts/{account_id}/health` - Analyze account health
+- `GET /db/sales` - List sales opportunities
+- `GET /db/support` - List support cases  
+- `GET /db/accounts` - Get account details
 
 ### Example AI Queries
 
@@ -144,7 +174,7 @@ The AI agent can handle natural language queries like:
 
 - **Sales Analysis**: "What are our top 5 sales opportunities this quarter?"
 - **Support Intelligence**: "Show me all critical support cases"
-- **Account Health**: "Analyze the health of account ACCT-001"
+- **Account Health**: "Analyze the health of our customer accounts"
 - **Cross-functional**: "Which accounts have both high-value opportunities and open support cases?"
 
 ## Architecture
@@ -157,9 +187,9 @@ The AI agent can handle natural language queries like:
                                 │
                                 ▼
                        ┌──────────────────┐
-                       │   vLLM Server    │
-                       │ (Granite Model)  │
-                       │  (Port 8000)     │
+                       │ IBM Granite Model│
+                       │  (GPU Accelerated)│
+                       │   Transformers   │
                        └──────────────────┘
 ```
 
@@ -167,7 +197,7 @@ The AI agent can handle natural language queries like:
 
 - **Flask API**: RESTful web service handling chat and data requests
 - **Granite AI Agent**: IBM Granite model with tool-calling capabilities
-- **vLLM Server**: High-performance inference server for LLM
+- **GPU Acceleration**: NVIDIA CUDA support via PyTorch
 - **PostgreSQL Database**: Sample CRM data (opportunities, accounts, support cases)
 - **Business Intelligence Tools**: CRM data analysis and account health scoring
 
@@ -180,23 +210,49 @@ cd rhaiis-demo/app
 
 ## Troubleshooting
 
+### Red Hat Registry Issues
+
+**Error: "unauthorized: authentication required"**
+```bash
+# Solution: Login to Red Hat registry
+sudo podman login registry.redhat.io
+```
+
+**Error: "invalid username/password"**
+- Verify your Red Hat account credentials
+- Ensure account has access to container registry
+- Try logging in via web: https://access.redhat.com/
+
 ### GPU Issues
 - Verify drivers: `nvidia-smi`
-- Check GPU access: `sudo podman run --rm --gpus all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi`
+- Check GPU memory: Look for ~5GB usage during model loading
+- Temperature monitoring: Ensure GPU temps are reasonable (<80°C)
 
 ### Container Issues  
 - Check podman status: `podman ps -a`
 - View logs: `podman logs <container_name>`
 - Restart services: `./stop_services.sh && ./deploy.sh`
 
-### vLLM Issues
-- Check memory usage: `free -h`
-- Verify model download: `ls -la ~/.cache/huggingface/hub/`
-- Monitor vLLM logs: `podman logs vllm-server`
+### Model Loading Issues
+- **Out of memory**: Requires 8GB+ GPU VRAM for Granite model
+- **Slow loading**: Initial model download can take 5-10 minutes
+- **Connection timeout**: Check internet connectivity for model download
 
 ### Database Issues
-- Check PostgreSQL status: `podman exec -it postgres-db psql -U demo -d crm_demo -c "\dt"`
-- Reset database: Remove `postgres-data` volume and redeploy
+- Check PostgreSQL status: `podman exec -it postgres-db psql -U crm_user -d crm_db -c "\dt"`
+- Reset database: Remove postgres-data volume and redeploy
+
+## Performance Expectations
+
+### Model Loading Time
+- **First run**: 5-10 minutes (model download + loading)
+- **Subsequent runs**: 1-2 minutes (loading from cache)
+- **GPU memory usage**: ~5.2GB for Granite model
+
+### Query Response Times
+- **Simple queries**: 1-3 seconds
+- **Complex analysis**: 10-20 seconds
+- **Database queries**: <1 second
 
 ## NVIDIA Driver Installation Details
 
@@ -208,16 +264,56 @@ For detailed NVIDIA driver installation instructions and troubleshooting, see [R
 - Requires EPEL repository for dependencies
 - Reboot required after installation
 
-## Contributing
+## Security Considerations
 
 This demo is designed for educational and demonstration purposes. For production deployments, consider:
 
 - Implementing proper authentication and authorization
-- Adding SSL/TLS encryption
+- Adding SSL/TLS encryption for API endpoints
 - Setting up monitoring and logging
-- Configuring high availability
-- Implementing proper secrets management
+- Configuring proper secrets management for database credentials
+- Implementing rate limiting and input validation
+- Using non-root containers where possible
+
+## Contributing
+
+This project demonstrates Red Hat's enterprise AI capabilities. For issues or improvements:
+
+1. Check existing documentation and troubleshooting guides
+2. Verify system requirements and prerequisites
+3. Test with the provided test suite
+4. Review logs for specific error messages
 
 ## License
 
 This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
+
+---
+
+## Quick Reference
+
+**Essential Commands:**
+```bash
+# Install and setup
+./quick-install.sh && sudo reboot
+
+# Login to registry (REQUIRED)
+sudo podman login registry.redhat.io
+
+# Deploy demo
+cd app && ./deploy.sh
+
+# Test everything
+./test_api.sh
+
+# Monitor GPU
+nvidia-smi
+
+# Stop services
+./stop_services.sh
+```
+
+**Important URLs:**
+- Red Hat Account: https://access.redhat.com/
+- Demo API: http://localhost:5000/health
+- AI Chat: POST http://localhost:5000/agent/chat
