@@ -1,127 +1,235 @@
+import re
 import json
 import requests
-import re
-from typing import Dict, Any, List, Optional
+from typing import List, Dict, Any, Optional
 from db_tools import DatabaseTools
 
 class GraniteAgent:
-    def __init__(self, vllm_url: str = "http://localhost:8000", model_name: str = "ibm-granite/granite-3.3-2b-instruct"):
-        self.vllm_url = vllm_url
-        self.model_name = model_name
-        self.db_tools = DatabaseTools()
-        self.system_prompt = """You are a helpful business intelligence assistant with access to a CRM database. 
-You can help analyze customer data, opportunities, support cases, and account health.
-
-Available tools:
-- get_opportunities(account_id=None, status=None): Get sales opportunities
-- get_support_cases(account_id=None, priority=None): Get support cases  
-- get_accounts(account_id=None): Get account information
-- analyze_account_health(account_id): Analyze overall account health
-
-When you need to use a tool, format your response as:
-TOOL_CALL: function_name(param1="value1", param2="value2")
-
-Always provide helpful analysis and insights based on the data you retrieve."""
+    """
+    A Granite AI agent that can call database tools to answer CRM-related questions.
+    This version uses Hugging Face Transformers pipeline directly instead of vLLM.
+    """
     
-    def _call_vllm(self, messages: List[Dict[str, str]], max_tokens: int = 512) -> str:
-        """Call the vLLM API"""
+    def __init__(self):
+        self.db_tools = DatabaseTools()
+        self.model = None
+        self.tokenizer = None
+        self._initialize_model()
+        
+    def _initialize_model(self):
+        """Initialize the Granite model using Hugging Face Transformers"""
         try:
-            payload = {
-                "model": self.model_name,
-                "messages": messages,
-                "max_tokens": max_tokens,
-                "temperature": 0.1
-            }
+            from transformers import pipeline, AutoTokenizer
+            import torch
             
-            response = requests.post(
-                f"{self.vllm_url}/v1/chat/completions",
-                json=payload,
-                headers={"Content-Type": "application/json"}
+            model_name = "ibm-granite/granite-3.3-2b-instruct"
+            
+            # Check if CUDA is available
+            device = 0 if torch.cuda.is_available() else -1
+            
+            print(f"Loading model {model_name} on {'GPU' if device == 0 else 'CPU'}...")
+            
+            # Initialize the pipeline
+            self.model = pipeline(
+                "text-generation",
+                model=model_name,
+                tokenizer=model_name,
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                device=device,
+                trust_remote_code=True,
+                return_full_text=False,
+                max_new_tokens=1000,
+                do_sample=True,
+                temperature=0.7,
+                pad_token_id=50256
             )
             
-            if response.status_code == 200:
-                return response.json()["choices"][0]["message"]["content"]
+            print("Model loaded successfully!")
+            
+        except Exception as e:
+            print(f"Error initializing model: {e}")
+            self.model = None
+    
+    def chat(self, message: str) -> str:
+        """
+        Process a chat message and return a response, using tools when needed.
+        """
+        if not self.model:
+            return "I'm sorry, the AI model is not available right now. Please try again later."
+        
+        try:
+            # Check if the query needs database information
+            if self._needs_database_info(message):
+                return self._handle_database_query(message)
             else:
-                return f"Error calling vLLM: {response.status_code} - {response.text}"
+                return self._generate_simple_response(message)
                 
         except Exception as e:
-            return f"Error calling vLLM: {str(e)}"
+            print(f"Error in chat: {e}")
+            return f"I encountered an error while processing your request: {str(e)}"
     
-    def _parse_tool_call(self, text: str) -> Optional[tuple]:
-        """Parse tool call from model response"""
-        pattern = r'TOOL_CALL:\s*(\w+)\((.*?)\)'
-        match = re.search(pattern, text)
+    def _needs_database_info(self, message: str) -> bool:
+        """Check if the message requires database information"""
+        db_keywords = [
+            'sales', 'opportunity', 'opportunities', 'revenue', 'deal', 'deals',
+            'account', 'accounts', 'customer', 'customers', 'client', 'clients',
+            'support', 'case', 'cases', 'ticket', 'tickets', 'issue', 'issues',
+            'pipeline', 'forecast', 'quota', 'target', 'performance', 'metrics',
+            'health', 'score', 'satisfaction', 'churn', 'retention'
+        ]
         
-        if match:
-            function_name = match.group(1)
-            params_str = match.group(2)
-            
-            # Parse parameters
-            params = {}
-            if params_str.strip():
-                # Simple parameter parsing
-                param_pairs = params_str.split(',')
-                for pair in param_pairs:
-                    if '=' in pair:
-                        key, value = pair.split('=', 1)
-                        key = key.strip()
-                        value = value.strip().strip('"\'')
-                        if value.lower() == 'none':
-                            value = None
-                        params[key] = value
-            
-            return function_name, params
-        return None
+        message_lower = message.lower()
+        return any(keyword in message_lower for keyword in db_keywords)
     
-    def _execute_tool(self, function_name: str, params: Dict[str, Any]) -> str:
-        """Execute a tool call"""
+    def _handle_database_query(self, message: str) -> str:
+        """Handle queries that need database information"""
+        
+        # Create a system prompt for the AI
+        system_prompt = """You are a CRM Business Intelligence Assistant. You have access to the following database tools:
+
+1. get_opportunities() - Get all sales opportunities
+2. get_support_cases() - Get all support cases  
+3. get_accounts() - Get all customer accounts
+4. analyze_account_health() - Get account health metrics
+
+When a user asks about CRM data, determine which tool(s) to call and then provide insights based on the data.
+
+Available tools:
+- get_opportunities
+- get_support_cases  
+- get_accounts
+- analyze_account_health
+
+User question: {message}
+
+Based on this question, which database tool should I call? Respond with just the tool name."""
+
+        # Determine which tool to call
+        tool_prompt = system_prompt.format(message=message)
+        
         try:
-            if function_name == "get_opportunities":
-                return self.db_tools.get_opportunities(**params)
-            elif function_name == "get_support_cases":
-                return self.db_tools.get_support_cases(**params)
-            elif function_name == "get_accounts":
-                return self.db_tools.get_accounts(**params)
-            elif function_name == "analyze_account_health":
-                return self.db_tools.analyze_account_health(**params)
+            tool_response = self.model(tool_prompt, max_new_tokens=50)
+            tool_name = tool_response[0]['generated_text'].strip().lower()
+            
+            # Call the appropriate database tool
+            data = None
+            if 'sales' in tool_name or 'opportunity' in tool_name:
+                data = self.db_tools.get_opportunities()
+                data_type = "sales opportunities"
+            elif 'support' in tool_name or 'case' in tool_name:
+                data = self.db_tools.get_support_cases()
+                data_type = "support cases"
+            elif 'account_health' in tool_name or 'health' in tool_name:
+                data = self.db_tools.analyze_account_health("ACC001")  # Sample account
+                data_type = "account health metrics"
+            elif 'account' in tool_name:
+                data = self.db_tools.get_accounts()
+                data_type = "customer accounts"
             else:
-                return f"Unknown function: {function_name}"
+                # Default to sales opportunities
+                data = self.db_tools.get_opportunities()
+                data_type = "sales opportunities"
+            
+            # Generate response based on the data
+            return self._generate_data_response(message, data, data_type)
+            
         except Exception as e:
-            return f"Error executing {function_name}: {str(e)}"
+            print(f"Error in database query handling: {e}")
+            return "I'm having trouble accessing the database right now. Please try again later."
     
-    def chat(self, user_message: str, conversation_history: List[Dict[str, str]] = None) -> Dict[str, Any]:
-        """Main chat interface with tool calling support"""
-        if conversation_history is None:
-            conversation_history = []
+    def _generate_data_response(self, message: str, data: Any, data_type: str) -> str:
+        """Generate a response based on database data"""
         
-        # Build messages
-        messages = [{"role": "system", "content": self.system_prompt}]
-        messages.extend(conversation_history)
-        messages.append({"role": "user", "content": user_message})
+        # Handle different data types
+        if isinstance(data, str):
+            # If data is a string (like from db_tools methods), parse it
+            try:
+                import ast
+                data = ast.literal_eval(data)
+            except:
+                # If parsing fails, use the string directly for analysis
+                analysis_prompt = f"""You are a CRM Business Intelligence Assistant. A user asked: "{message}"
+
+I retrieved the following {data_type} information:
+
+{data}
+
+Please provide a helpful business analysis and insights based on this data. Be specific about numbers, trends, and actionable recommendations."""
+                
+                try:
+                    response = self.model(analysis_prompt, max_new_tokens=300)
+                    return response[0]['generated_text'].strip()
+                except Exception as e:
+                    print(f"Error generating string data response: {e}")
+                    return f"I found {data_type} data but had trouble analyzing it. Here's the raw information: {str(data)[:200]}..."
         
-        # Get initial response
-        response = self._call_vllm(messages)
+        if not data or (isinstance(data, list) and len(data) == 0):
+            return f"I found no {data_type} in the database."
         
-        # Check for tool calls
-        tool_call = self._parse_tool_call(response)
-        if tool_call:
-            function_name, params = tool_call
-            tool_result = self._execute_tool(function_name, params)
-            
-            # Add tool result and get final response
-            messages.append({"role": "assistant", "content": response})
-            messages.append({"role": "user", "content": f"Tool result: {tool_result}"})
-            
-            final_response = self._call_vllm(messages)
-            
-            return {
-                "response": final_response,
-                "tool_used": function_name,
-                "tool_params": params,
-                "tool_result": tool_result
-            }
+        # Create a clean, readable summary of the data
+        if isinstance(data, list):
+            data_summary = self._format_data_summary(data[:3])  # Show first 3 records
+            record_count = len(data)
         else:
-            return {
-                "response": response,
-                "tool_used": None
-            }
+            data_summary = str(data)[:300]  # Truncate long strings
+            record_count = 1
+        
+        analysis_prompt = f"""You are a CRM Business Intelligence Assistant. A user asked: "{message}"
+
+I retrieved the following {data_type} data:
+
+{data_summary}
+
+Total records: {record_count}
+
+Please provide a helpful business analysis and insights based on this data. Be specific about numbers, trends, and actionable recommendations. Do not include the raw data in your response."""
+
+        try:
+            response = self.model(analysis_prompt, max_new_tokens=300)
+            return response[0]['generated_text'].strip()
+        except Exception as e:
+            print(f"Error generating data response: {e}")
+            return f"I found {record_count} {data_type}. Here's a summary: {data_summary}"
+    
+    def _format_data_summary(self, data: List[Dict]) -> str:
+        """Format data into a readable summary for the AI model"""
+        if not data:
+            return "No data available"
+        
+        summary_lines = []
+        for i, record in enumerate(data, 1):
+            if isinstance(record, dict):
+                # Create a readable summary of key fields
+                key_info = []
+                for key, value in record.items():
+                    if key in ['opportunity_name', 'company_name', 'subject', 'account_id', 'amount', 'stage', 'priority', 'status']:
+                        key_info.append(f"{key}: {value}")
+                
+                if key_info:
+                    summary_lines.append(f"Record {i}: {', '.join(key_info[:4])}")  # Show first 4 fields
+                else:
+                    summary_lines.append(f"Record {i}: {str(record)[:100]}...")
+            else:
+                summary_lines.append(f"Record {i}: {str(record)[:100]}...")
+        
+        return "\n".join(summary_lines)
+    
+    def _generate_simple_response(self, message: str) -> str:
+        """Generate a simple response for non-database queries"""
+        
+        prompt = f"""You are a helpful CRM Business Intelligence Assistant. Please provide a brief, helpful response to: {message}"""
+        
+        try:
+            response = self.model(prompt, max_new_tokens=150)
+            return response[0]['generated_text'].strip()
+        except Exception as e:
+            print(f"Error generating simple response: {e}")
+            return "I'm here to help with CRM and business intelligence questions. How can I assist you today?"
+
+# Test the agent if run directly
+if __name__ == "__main__":
+    agent = GraniteAgent()
+    
+    # Test query
+    response = agent.chat("What are our current sales opportunities?")
+    print("Response:", response)

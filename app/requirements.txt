@@ -1,5 +1,19 @@
+# Core Flask application
 flask==3.0.0
 requests==2.31.0
-psycopg2-binary==2.9.9
 python-dotenv==1.0.0
 gunicorn==21.2.0
+
+# Database connectivity
+psycopg2-binary==2.9.9
+
+# AI/ML dependencies
+torch>=2.0.0
+transformers>=4.30.0
+tokenizers>=0.13.0
+accelerate>=0.20.0
+
+# Additional utilities
+numpy>=1.24.0
+tqdm>=4.65.0
+packaging>=23.0
