@@ -80,7 +80,6 @@ sudo podman login registry.redhat.io
 ```
 
 ---
-
 ## 🎯 What This Demo Shows
 
 This demo showcases an **AI-powered CRM assistant** that can:
@@ -162,8 +161,9 @@ Each query demonstrates the AI agent's ability to:
 
 ## 📋 System Requirements
 
-### Hardware Specifications (g5.4xlarge)
-- **GPU**: NVIDIA A10G (24GB VRAM)
+### Hardware Requirements
+- **AWS EC2**: `g5.4xlarge` recommended for optimal performance
+- **GPU**: NVIDIA A10G (24GB VRAM) included with g5.4xlarge
 - **vCPUs**: 16 cores
 - **RAM**: 64GB
 - **Storage**: 200GB+ EBS volume recommended
@@ -174,6 +174,56 @@ Each query demonstrates the AI agent's ability to:
 - **Accounts**: Red Hat Developer account (free)
 - **Network**: Internet access for package and model downloads
 
+## 🔧 Manual Installation Guide
+
+### Step 1: System Preparation
+```bash
+# Update system and install essentials
+sudo dnf update -y
+sudo dnf install -y git tmux wget curl python3 python3-pip podman
+```
+
+### Step 2: NVIDIA GPU Drivers (Critical!)
+```bash
+# Add NVIDIA repository
+sudo dnf config-manager --add-repo \
+  https://developer.download.nvidia.com/compute/cuda/repos/rhel10/x86_64/cuda-rhel10.repo
+
+# Install GPU drivers (bypass GPG if needed)
+sudo dnf install -y --nogpgcheck nvidia-driver nvidia-dkms cuda-drivers
+
+# Install container toolkit
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
+  sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+sudo dnf install -y --nogpgcheck nvidia-container-toolkit
+
+# Configure podman for GPU support
+sudo nvidia-ctk runtime configure --runtime=podman --config=/usr/share/containers/containers.conf
+
+# REBOOT REQUIRED!
+sudo reboot
+```
+
+### Step 3: Post-Reboot Verification
+```bash
+# Verify GPU detection
+nvidia-smi
+
+# Test GPU in containers
+sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+sudo podman run --rm --device nvidia.com/gpu=all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi
+```
+
+### Step 4: Deploy Demo
+```bash
+# Authenticate with Red Hat registry
+sudo podman login registry.redhat.io
+
+# Clone and deploy
+git clone https://github.com/YOUR_REPO/rhaiis-demo.git
+cd rhaiis-demo/app
+./deploy.sh
+```
 ## 🧪 Testing the Demo
 
 ### Quick Health Check
