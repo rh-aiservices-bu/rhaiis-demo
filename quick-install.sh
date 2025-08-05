@@ -23,20 +23,24 @@ sudo dnf update -y
 echo "🔧 Installing basic tools..."
 sudo dnf install -y git tmux wget curl python3 python3-pip podman
 
-# Install NVIDIA drivers
+# Install NVIDIA drivers via RPM Fusion (tested working method)
 echo "🎮 Installing NVIDIA GPU drivers..."
-sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel10/x86_64/cuda-rhel10.repo
-sudo rpm --import https://developer.download.nvidia.com/compute/cuda/repos/rhel10/x86_64/D42D0685.pub || true
-sudo dnf install -y --nogpgcheck nvidia-driver nvidia-dkms cuda-drivers
+echo "   - Installing EPEL and RPM Fusion repositories..."
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
+sudo dnf install -y https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm
+sudo dnf install -y https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm
+
+echo "   - Installing kernel development packages..."
+sudo dnf install -y kernel-devel kernel-headers dkms gcc make
+
+echo "   - Installing NVIDIA drivers from RPM Fusion..."
+sudo dnf install -y akmod-nvidia xorg-x11-drv-nvidia-cuda
 
 # Install NVIDIA Container Toolkit
 echo "🐳 Installing NVIDIA Container Toolkit..."
 curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
   sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
 sudo dnf install -y --nogpgcheck nvidia-container-toolkit
-
-# Configure podman for NVIDIA
-sudo nvidia-ctk runtime configure --runtime=podman --config=/usr/share/containers/containers.conf
 
 echo ""
 echo "✅ Installation completed!"

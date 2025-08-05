@@ -1,82 +1,242 @@
-### NVIDIA GPU Driver Installation (RHEL 10)
+# NVIDIA Driver Installation for RHEL 10
 
-> **⚠️ Critical for GPU acceleration**: These steps are required for optimal performance
+This document provides detailed instructions for installing NVIDIA GPU drivers on Red Hat Enterprise Linux 10, specifically tested for the RHAIIS demo.
 
-#### Prerequisites
-- RHEL 10 system with NVIDIA GPU
-- Administrative (sudo) access
-- Internet connection for package downloads
+## Overview
 
-#### Step-by-Step Installation
+The RHAIIS demo requires NVIDIA GPU drivers for accelerated AI inference. After extensive testing, we've found that **RPM Fusion repositories** provide the most reliable installation method for RHEL 10.
 
-1. **Install EPEL Repository**
-   ```bash
-   sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm -y
-   ```
+## Tested Working Method: RPM Fusion
 
-2. **Install RPM Fusion Repositories**
-   ```bash
-   sudo dnf install \
-       https://download1.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm \
-       https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm -y
-   ```
+### Why RPM Fusion?
 
-3. **Install NVIDIA Drivers and Tools**
-   ```bash
-   # Install the main NVIDIA driver package with automatic kernel module building
-   sudo dnf install akmod-nvidia -y
-   
-   # Install additional NVIDIA utilities and CUDA support
-   sudo dnf install xorg-x11-drv-nvidia-cuda -y
-   ```
+- **Reliability**: Precompiled packages that work with RHEL 10
+- **Automatic Updates**: Drivers update with system updates
+- **Kernel Compatibility**: Automatic kernel module building via DKMS
+- **No Manual Compilation**: Avoids common build issues
 
-4. **Build and Load Kernel Modules**
-   ```bash
-   # Start the akmods service to build NVIDIA kernel modules
-   sudo systemctl start akmods
-   
-   # Verify kernel modules were built successfully
-   ls /lib/modules/$(uname -r)/extra/nvidia*
-   ```
+### Prerequisites
 
-5. **Reboot System**
-   ```bash
-   sudo reboot
-   ```
+1. Fresh RHEL 10.x system
+2. NVIDIA GPU (tested with Tesla T4, A10G)
+3. Internet connection
+4. Non-root user with sudo privileges
 
-6. **Verify Installation**
-   ```bash
-   # Check NVIDIA driver version and GPU status
-   nvidia-smi
-   
-   # Verify kernel modules are loaded
-   lsmod | grep nvidia
-   ```
+### Step-by-Step Installation
 
-#### Expected Output
-After successful installation, `nvidia-smi` should display:
-```
-+-----------------------------------------------------------------------------------------+
-| NVIDIA-SMI 575.64.05              Driver Version: 575.64.05      CUDA Version: 12.9     |
-|-----------------------------------------+------------------------+----------------------+
-| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
-| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
-|                                         |                        |               MIG M. |
-|=========================================+========================+======================|
-|   0  Tesla T4                       Off |   00000000:00:1E.0 Off |                    0 |
-| N/A   31C    P8             13W /   70W |       0MiB /  15360MiB |      0%      Default |
-|                                         |                        |                  N/A |
-+-----------------------------------------+------------------------+----------------------+
-```
-
-#### Troubleshooting
-- **If `nvidia-smi` command not found**: Install `xorg-x11-drv-nvidia-cuda` package
-- **If kernel modules don't build**: Ensure matching `kernel-devel` package is installed
-- **If installation fails**: Check system logs with `journalctl -u akmods`
-
-#### GPU Verification for This Demo
-Once drivers are installed, the deployment script will automatically detect GPU acceleration:
+#### 1. Install EPEL Repository
 ```bash
-./deploy.sh
-# Should show: "✅ NVIDIA GPU detected: Tesla T4"
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
 ```
+
+#### 2. Install RPM Fusion Repositories
+```bash
+# Free repository
+sudo dnf install -y https://mirrors.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm
+
+# Non-free repository (required for NVIDIA drivers)
+sudo dnf install -y https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm
+```
+
+#### 3. Install Kernel Development Tools
+```bash
+sudo dnf install -y kernel-devel kernel-headers dkms gcc make
+```
+
+#### 4. Install NVIDIA Drivers
+```bash
+sudo dnf install -y akmod-nvidia xorg-x11-drv-nvidia-cuda
+```
+
+#### 5. Reboot System
+```bash
+sudo reboot
+```
+
+#### 6. Verify Installation
+After reboot:
+```bash
+nvidia-smi
+```
+
+Expected output should show your GPU information and driver version.
+
+### Package Details
+
+- **`akmod-nvidia`**: Automatically builds NVIDIA kernel modules for your kernel
+- **`xorg-x11-drv-nvidia-cuda`**: CUDA support for compute workloads
+- **DKMS**: Automatically rebuilds drivers when kernel updates
+
+## Container Support
+
+For containerized GPU workloads (required for vLLM):
+
+### Install NVIDIA Container Toolkit
+```bash
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
+  sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+sudo dnf install -y --nogpgcheck nvidia-container-toolkit
+```
+
+### Test Container GPU Access
+```bash
+sudo podman run --rm --gpus all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi
+```
+
+## Alternative Methods (Not Recommended for RHEL 10)
+
+### NVIDIA CUDA Repository Method
+❌ **Issues Found:**
+- CUDA repository for RHEL 10 returns 404 errors
+- Package conflicts with system packages
+- Incomplete dependency resolution
+
+### NVIDIA Runfile Installer
+❌ **Issues Found:**
+- Kernel/compiler version mismatches
+- Complex manual configuration required
+- Doesn't integrate with package management
+
+### Native RHEL Packages
+❌ **Issues Found:**
+- NVIDIA drivers not available in standard RHEL 10 repositories
+- Would require RHEL subscription with additional channels
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### 1. "akmod-nvidia" Package Not Found
+**Cause**: RPM Fusion repositories not properly installed
+
+**Solution**:
+```bash
+# Verify repositories are enabled
+sudo dnf repolist | grep rpmfusion
+
+# If missing, reinstall RPM Fusion
+sudo dnf install -y https://mirrors.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm
+```
+
+#### 2. Kernel Module Build Failures
+**Cause**: Missing kernel headers or development tools
+
+**Solution**:
+```bash
+# Ensure kernel versions match
+uname -r
+rpm -q kernel-devel kernel-headers
+
+# Reinstall if versions don't match
+sudo dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r)
+```
+
+#### 3. "nvidia-smi" Not Found After Reboot
+**Cause**: Driver installation incomplete or kernel module not loaded
+
+**Solution**:
+```bash
+# Check if NVIDIA modules are loaded
+lsmod | grep nvidia
+
+# Check akmods service status
+sudo systemctl status akmods
+
+# Manually trigger module build
+sudo akmods --force
+sudo reboot
+```
+
+#### 4. Container GPU Access Denied
+**Cause**: NVIDIA Container Toolkit not properly configured
+
+**Solution**:
+```bash
+# Verify container toolkit installation
+nvidia-ctk --version
+
+# Test basic GPU access
+sudo podman run --rm --device nvidia.com/gpu=all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi
+```
+
+### Verification Commands
+
+#### System-Level Verification
+```bash
+# Check driver version
+nvidia-smi
+
+# Check loaded modules
+lsmod | grep nvidia
+
+# Check hardware detection
+lspci | grep -i nvidia
+
+# Check CUDA version
+nvcc --version  # If CUDA toolkit installed
+```
+
+#### Container-Level Verification
+```bash
+# Test basic container GPU access
+sudo podman run --rm --gpus all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi
+
+# Test with PyTorch (if needed)
+sudo podman run --rm --gpus all pytorch/pytorch:latest python -c "import torch; print(torch.cuda.is_available())"
+```
+
+## Performance Tuning
+
+### GPU Persistence Mode
+Enable persistence mode for better performance:
+```bash
+sudo nvidia-smi -pm 1
+```
+
+### Power Management
+Set maximum power limit (adjust based on your GPU):
+```bash
+sudo nvidia-smi -pl 300  # Set to 300W, adjust as needed
+```
+
+## Integration with RHAIIS Demo
+
+The RHAIIS demo requires:
+1. NVIDIA drivers (installed via this guide)
+2. NVIDIA Container Toolkit (for podman GPU access)
+3. Sufficient GPU memory (8GB+ recommended for Granite model)
+
+After following this guide, the demo's `./deploy.sh` script should successfully:
+- Launch vLLM server with GPU acceleration
+- Load the Granite model with CUDA support
+- Provide high-performance AI inference
+
+## Maintenance
+
+### Automatic Updates
+RPM Fusion drivers update automatically with system updates:
+```bash
+sudo dnf update
+# Reboot if kernel was updated
+```
+
+### Manual Driver Updates
+```bash
+sudo dnf update akmod-nvidia xorg-x11-drv-nvidia-cuda
+sudo reboot
+```
+
+### Kernel Updates
+DKMS automatically rebuilds driver modules for new kernels. If issues occur:
+```bash
+sudo akmods --force
+sudo reboot
+```
+
+## Support and Resources
+
+- **RPM Fusion Documentation**: https://rpmfusion.org/
+- **NVIDIA Developer Documentation**: https://developer.nvidia.com/
+- **RHEL Documentation**: https://access.redhat.com/documentation/
+
+For RHAIIS demo-specific issues, refer to the main [README.md](README.md) troubleshooting section.
