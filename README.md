@@ -185,44 +185,45 @@ sudo dnf install -y git tmux wget curl python3 python3-pip podman
 ```
 
 ### Step 2: NVIDIA GPU Drivers (Critical!)
+
+> **⚠️ GPU acceleration is essential** for optimal AI performance
+
+#### Quick Installation (RHEL 10)
 ```bash
-# Add NVIDIA repository
-sudo dnf config-manager --add-repo \
-  https://developer.download.nvidia.com/compute/cuda/repos/rhel10/x86_64/cuda-rhel10.repo
+# Install EPEL and RPM Fusion repositories
+sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm -y
+sudo dnf install \
+    https://download1.rpmfusion.org/free/el/rpmfusion-free-release-$(rpm -E %rhel).noarch.rpm \
+    https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-$(rpm -E %rhel).noarch.rpm -y
 
-# Install GPU drivers (bypass GPG if needed)
-sudo dnf install -y --nogpgcheck nvidia-driver nvidia-dkms cuda-drivers
+# Install NVIDIA drivers and CUDA tools
+sudo dnf install akmod-nvidia xorg-x11-drv-nvidia-cuda -y
 
-# Install container toolkit
-curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | \
-  sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
-sudo dnf install -y --nogpgcheck nvidia-container-toolkit
-
-# Configure podman for GPU support
-sudo nvidia-ctk runtime configure --runtime=podman --config=/usr/share/containers/containers.conf
-
-# REBOOT REQUIRED!
+# Build kernel modules and reboot
+sudo systemctl start akmods
 sudo reboot
 ```
 
-### Step 3: Post-Reboot Verification
+#### Verification
 ```bash
-# Verify GPU detection
+# After reboot, verify GPU is detected
 nvidia-smi
-
-# Test GPU in containers
-sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
-sudo podman run --rm --device nvidia.com/gpu=all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi
 ```
 
-### Step 4: Deploy Demo
-```bash
-# Authenticate with Red Hat registry
-sudo podman login registry.redhat.io
+📖 **For detailed installation guide, troubleshooting, and alternative methods**: [NVIDIA Installation Guide](README_NVIDIA_SECTION.md)
 
-# Clone and deploy
-git clone https://github.com/YOUR_REPO/rhaiis-demo.git
+### Step 3: Deploy Demo
+```bash
+# After reboot, verify GPU is working
+nvidia-smi
+```
+
+```bash
+# Clone repository (if not done already)
+git clone https://github.com/rh-aiservices-bu/rhaiis-demo.git
 cd rhaiis-demo/app
+
+# Deploy the demo
 ./deploy.sh
 ```
 ## 🧪 Testing the Demo
