@@ -188,7 +188,7 @@ The AI agent can handle natural language queries like:
                                 ▼
                        ┌──────────────────┐
                        │ IBM Granite Model│
-                       │  (GPU Accelerated)│
+                       │ (GPU Accelerated)│
                        │   Transformers   │
                        └──────────────────┘
 ```
