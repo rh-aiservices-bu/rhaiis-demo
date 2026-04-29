@@ -1,4 +1,4 @@
-# RHAIIS Demo Deployment Checklist
+# RHAI Demo Deployment Checklist
 
 ## Pre-Deployment Checklist
 

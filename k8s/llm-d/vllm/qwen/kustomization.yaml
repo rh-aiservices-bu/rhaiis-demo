@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: demo-llm
+
+resources:
+  - ../base
+
+patches:
+  - target:
+      kind: InferenceService
+      name: vllm
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: qwen-vllm
+      - op: replace
+        path: /spec/predictor/model/storageUri
+        value: "hf://Qwen/Qwen3-4B"
+  - target:
+      kind: Service
+      name: vllm-lb
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: qwen-vllm-lb
+      - op: replace
+        path: /spec/selector/app
+        value: isvc.qwen-vllm-predictor
+  - target:
+      kind: PodMonitor
+      name: vllm-monitor
+    patch: |-
+      - op: replace
+        path: /metadata/name
+        value: qwen-vllm-monitor
+      - op: replace
+        path: /spec/selector/matchLabels/serving.kserve.io~1inferenceservice
+        value: qwen-vllm

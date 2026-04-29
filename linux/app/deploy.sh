@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Deploy the RHAIIS CRM Demo
+# Deploy the RHAI CRM Demo
 set -e
 
 echo "=================================================="
-echo "   Red Hat AI Inference Server CRM Demo"
+echo "   Red Hat AI Inference CRM Demo"
 echo "   Deployment Script"
 echo "=================================================="
 

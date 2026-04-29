@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Stop all RHAIIS demo services
-echo "Stopping RHAIIS CRM Demo services..."
+# Stop all RHAI demo services
+echo "Stopping RHAI CRM Demo services..."
 
 # Stop Flask app
 if [ -f flask.pid ]; then

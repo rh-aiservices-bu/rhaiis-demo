@@ -1,6 +1,6 @@
-# Red Hat AI Inference Server (vLLM) Demo on RHEL
+# Red Hat AI Inference (vLLM) Demo on RHEL
 
-This guide provides step-by-step instructions for setting up vLLM on Red Hat Enterprise Linux (RHEL) and deploying the Red Hat AI Agentic Demo to showcase the features of Red Hat AI Inference Server.
+This guide provides step-by-step instructions for setting up vLLM on Red Hat Enterprise Linux (RHEL) and deploying the Red Hat AI Agentic Demo to showcase the features of Red Hat AI Inference.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ This guide provides step-by-step instructions for setting up vLLM on Red Hat Ent
 
 ## Overview
 
-This demo showcases Red Hat AI Inference Server (based on vLLM) running an agentic AI workflow that integrates with:
+This demo showcases Red Hat AI Inference (based on vLLM) running an agentic AI workflow that integrates with:
 - CRM systems
 - PDF generation
 - Slack messaging
@@ -162,7 +162,7 @@ mkdir -p $HOME/rhaiis-cache
 
 **Note**: Get your Hugging Face token from https://huggingface.co/settings/tokens
 
-### 2. Deploy Red Hat AI Inference Server
+### 2. Deploy Red Hat AI Inference
 
 Create a new tmux window for the vLLM server:
 
@@ -171,7 +171,7 @@ Create a new tmux window for the vLLM server:
 # Ctrl+B, then 'c' to create new window
 ```
 
-Run the Red Hat AI Inference Server container:
+Run the Red Hat AI Inference container:
 
 ```bash
 podman run --rm -it \
@@ -391,6 +391,6 @@ After successful deployment:
 
 ## Additional Resources
 
-- [Red Hat AI Inference Server Documentation](https://docs.redhat.com/en/documentation/red_hat_ai_inference_server/3.0/)
+- [Red Hat AI Inference Documentation](https://docs.redhat.com/en/documentation/red_hat_ai_inference_server/3.0/)
 - [vLLM Documentation](https://docs.vllm.ai/)
 - [NVIDIA Container Toolkit Documentation](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/)

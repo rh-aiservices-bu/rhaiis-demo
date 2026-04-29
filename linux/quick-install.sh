@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# RHAIIS Demo Quick Installation Script
+# RHAI Demo Quick Installation Script
 # Run this on a fresh RHEL 10.x system with GPU
 
 set -e
 
 echo "=========================================="
-echo "  RHAIIS Demo Quick Installation"
+echo "  RHAI Demo Quick Installation"
 echo "=========================================="
 
 # Check if running as root

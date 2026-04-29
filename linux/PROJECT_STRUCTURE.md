@@ -1,4 +1,4 @@
-# RHAIIS Demo Project Structure
+# RHAI Demo Project Structure
 
 ```
 rhaiis-demo/

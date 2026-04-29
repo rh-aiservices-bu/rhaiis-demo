@@ -1,0 +1,846 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llm-d-performance-dashboard
+  # OpenShift: set namespace to openshift-config-managed and uncomment labels below
+  # namespace: openshift-config-managed
+  # labels:
+  #   console.openshift.io/dashboard: "true"
+  #   console.openshift.io/odc-dashboard: "true"
+data:
+  llm-d-performance-dashboard.json: |-
+    {
+        "annotations": {
+            "list": []
+        },
+        "editable": true,
+        "gnetId": null,
+        "graphTooltip": 1,
+        "hideControls": false,
+        "links": [],
+        "refresh": "30s",
+        "rows": [
+            {
+                "collapse": false,
+                "height": "250px",
+                "panels": [
+                    {
+                        "datasource": "$datasource",
+                        "id": 1,
+                        "span": 6,
+                        "targets": [
+                            {
+                                "expr": "histogram_quantile(0.50, rate(kserve_vllm:time_to_first_token_seconds_bucket{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m]))",
+                                "format": "time_series",
+                                "legendFormat": "P50 TTFT",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "histogram_quantile(0.95, rate(kserve_vllm:time_to_first_token_seconds_bucket{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m]))",
+                                "format": "time_series",
+                                "legendFormat": "P95 TTFT",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "histogram_quantile(0.99, rate(kserve_vllm:time_to_first_token_seconds_bucket{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m]))",
+                                "format": "time_series",
+                                "legendFormat": "P99 TTFT",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "Time to First Token (TTFT)",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": true,
+                        "points": false,
+                        "bars": false,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "avg": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "s",
+                                "label": "Time (seconds)",
+                                "logBase": 1,
+                                "min": 0,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    },
+                    {
+                        "datasource": "$datasource",
+                        "id": 2,
+                        "span": 6,
+                        "targets": [
+                            {
+                                "expr": "histogram_quantile(0.50, rate(kserve_vllm:inter_token_latency_seconds_bucket{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m]))",
+                                "format": "time_series",
+                                "legendFormat": "P50 Inter-Token",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "histogram_quantile(0.95, rate(kserve_vllm:inter_token_latency_seconds_bucket{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m]))",
+                                "format": "time_series",
+                                "legendFormat": "P95 Inter-Token",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "Inter-Token Latency",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": true,
+                        "points": false,
+                        "bars": false,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "avg": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "s",
+                                "label": "Time (seconds)",
+                                "logBase": 1,
+                                "min": 0,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    }
+                ],
+                "repeat": null,
+                "showTitle": true,
+                "title": "Latency",
+                "titleSize": "h6"
+            },
+            {
+                "collapse": false,
+                "height": "200px",
+                "panels": [
+                    {
+                        "datasource": "$datasource",
+                        "id": 4,
+                        "span": 3,
+                        "targets": [
+                            {
+                                "expr": "sum(rate(kserve_vllm:prefix_cache_hits_total{llm_isvc_name=~\"$model\", namespace=~\"$namespace\", instance=~\".*:8000\"}[5m])) / sum(rate(kserve_vllm:prefix_cache_queries_total{llm_isvc_name=~\"$model\", namespace=~\"$namespace\", instance=~\".*:8000\"}[5m]))",
+                                "format": "time_series",
+                                "legendFormat": "Overall Cache Hit Rate",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "KV Cache Hit Rate",
+                        "type": "singlestat",
+                        "valueName": "current",
+                        "valueFontSize": "100%",
+                        "format": "percentunit",
+                        "thresholds": "0.3,0.6",
+                        "colorBackground": true,
+                        "colorValue": false,
+                        "colors": [
+                            "#E02525",
+                            "#FF9900",
+                            "#73C586"
+                        ],
+                        "sparkline": {
+                            "show": true,
+                            "full": false,
+                            "lineColor": "#FFFFFF",
+                            "fillColor": "rgba(255,255,255,0.15)"
+                        },
+                        "gauge": {
+                            "show": true,
+                            "minValue": 0,
+                            "maxValue": 1,
+                            "thresholdMarkers": true,
+                            "thresholdLabels": false
+                        }
+                    },
+                    {
+                        "datasource": "$datasource",
+                        "id": 9,
+                        "span": 3,
+                        "targets": [
+                            {
+                                "expr": "rate(kserve_vllm:prefix_cache_hits_total{llm_isvc_name=~\"$model\", namespace=~\"$namespace\", instance=~\".*:8000\"}[5m]) / rate(kserve_vllm:prefix_cache_queries_total{llm_isvc_name=~\"$model\", namespace=~\"$namespace\", instance=~\".*:8000\"}[5m])",
+                                "format": "time_series",
+                                "legendFormat": "Pod {{pod}}",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "Per-Pod Cache Hit Rates",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": true,
+                        "points": false,
+                        "bars": true,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "percentunit",
+                                "label": "Cache Hit Rate",
+                                "logBase": 1,
+                                "min": 0,
+                                "max": 1,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    },
+                    {
+                        "datasource": "$datasource",
+                        "id": 10,
+                        "span": 3,
+                        "targets": [
+                            {
+                                "expr": "kserve_vllm:kv_cache_usage_perc{instance=~\".*:8000\"} * 100",
+                                "format": "time_series",
+                                "legendFormat": "Cache Usage %",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "GPU Cache Usage %",
+                        "type": "singlestat",
+                        "valueName": "current",
+                        "valueFontSize": "80%",
+                        "format": "short",
+                        "decimals": 1,
+                        "thresholds": "50,80",
+                        "colorBackground": false,
+                        "colorValue": true,
+                        "colors": [
+                            "#73C586",
+                            "#FF9900",
+                            "#E02525"
+                        ],
+                        "sparkline": {
+                            "show": true,
+                            "full": false,
+                            "lineColor": "#3B99FC",
+                            "fillColor": "rgba(59,153,252,0.15)"
+                        },
+                        "gauge": {
+                            "show": false
+                        }
+                    },
+                    {
+                        "datasource": "$datasource",
+                        "id": 11,
+                        "span": 3,
+                        "targets": [
+                            {
+                                "expr": "kserve_vllm:kv_cache_usage_perc{instance=~\".*:8000\"} * 100",
+                                "format": "time_series",
+                                "legendFormat": "Pod {{pod}}",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "Per-Pod GPU Cache Usage",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": true,
+                        "points": false,
+                        "bars": true,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "short",
+                                "label": "Cache Usage %",
+                                "logBase": 1,
+                                "min": 0,
+                                "max": 100,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    }
+                ],
+                "repeat": null,
+                "showTitle": true,
+                "title": "KV Cache",
+                "titleSize": "h6"
+            },
+            {
+                "collapse": false,
+                "height": "250px",
+                "panels": [
+                    {
+                        "datasource": "$datasource",
+                        "id": 6,
+                        "span": 6,
+                        "targets": [
+                            {
+                                "expr": "rate(kserve_vllm:request_success_total{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m])",
+                                "format": "time_series",
+                                "legendFormat": "Success Rate",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "rate(kserve_vllm:e2e_request_latency_seconds_count{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m])",
+                                "format": "time_series",
+                                "legendFormat": "Total Rate",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "Request Throughput",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": true,
+                        "points": false,
+                        "bars": false,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "avg": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "reqps",
+                                "label": "Requests/sec",
+                                "logBase": 1,
+                                "min": 0,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    },
+                    {
+                        "aliasColors": {
+                            "Requests Waiting": "#FF9900"
+                        },
+                        "datasource": "$datasource",
+                        "id": 5,
+                        "span": 6,
+                        "targets": [
+                            {
+                                "expr": "kserve_vllm:num_requests_running{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}",
+                                "format": "time_series",
+                                "legendFormat": "Requests Running",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "kserve_vllm:num_requests_waiting{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}",
+                                "format": "time_series",
+                                "legendFormat": "Requests Waiting",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "Request Queue Status",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": true,
+                        "points": false,
+                        "bars": false,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "short",
+                                "label": "Request Count",
+                                "logBase": 1,
+                                "min": 0,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    }
+                ],
+                "repeat": null,
+                "showTitle": true,
+                "title": "Throughput & Queue",
+                "titleSize": "h6"
+            },
+            {
+                "collapse": false,
+                "height": "250px",
+                "panels": [
+                    {
+                        "datasource": "$datasource",
+                        "id": 7,
+                        "span": 6,
+                        "targets": [
+                            {
+                                "expr": "rate(kserve_vllm:prompt_tokens_total{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m])",
+                                "format": "time_series",
+                                "legendFormat": "Prompt Tokens/sec",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "rate(kserve_vllm:generation_tokens_total{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m])",
+                                "format": "time_series",
+                                "legendFormat": "Generated Tokens/sec",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "Token Processing Rate",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": true,
+                        "points": false,
+                        "bars": false,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "avg": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "short",
+                                "label": "Tokens/sec",
+                                "logBase": 1,
+                                "min": 0,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    },
+                    {
+                        "datasource": "$datasource",
+                        "id": 8,
+                        "span": 6,
+                        "targets": [
+                            {
+                                "expr": "histogram_quantile(0.50, rate(kserve_vllm:e2e_request_latency_seconds_bucket{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m]))",
+                                "format": "time_series",
+                                "legendFormat": "P50 E2E",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "histogram_quantile(0.95, rate(kserve_vllm:e2e_request_latency_seconds_bucket{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m]))",
+                                "format": "time_series",
+                                "legendFormat": "P95 E2E",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "histogram_quantile(0.99, rate(kserve_vllm:e2e_request_latency_seconds_bucket{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}[5m]))",
+                                "format": "time_series",
+                                "legendFormat": "P99 E2E",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "kserve_vllm:e2e_request_latency_seconds_sum{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"} / kserve_vllm:e2e_request_latency_seconds_count{llm_isvc_name=~\"$model\", namespace=~\"$namespace\"}",
+                                "format": "time_series",
+                                "legendFormat": "Average E2E",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "End-to-End Request Latency",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": true,
+                        "points": false,
+                        "bars": false,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "avg": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "s",
+                                "label": "Time (seconds)",
+                                "logBase": 1,
+                                "min": 0,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    }
+                ],
+                "repeat": null,
+                "showTitle": true,
+                "title": "Tokens & E2E Latency",
+                "titleSize": "h6"
+            },
+            {
+                "collapse": false,
+                "height": "250px",
+                "panels": [
+                    {
+                        "aliasColors": {
+                            "Average Queue Size": "#FF9900"
+                        },
+                        "datasource": "$datasource",
+                        "id": 13,
+                        "span": 6,
+                        "targets": [
+                            {
+                                "expr": "inference_pool_ready_pods",
+                                "format": "time_series",
+                                "legendFormat": "Ready Pods",
+                                "legendLink": null
+                            },
+                            {
+                                "expr": "inference_pool_average_queue_size",
+                                "format": "time_series",
+                                "legendFormat": "Average Queue Size",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "EPP Pool Health & Load",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": true,
+                        "points": false,
+                        "bars": false,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "short",
+                                "label": "Count",
+                                "logBase": 1,
+                                "min": 0,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    },
+                    {
+                        "datasource": "$datasource",
+                        "id": 14,
+                        "span": 6,
+                        "targets": [
+                            {
+                                "expr": "inference_pool_average_kv_cache_utilization",
+                                "format": "time_series",
+                                "legendFormat": "Pool KV Cache Utilization",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "EPP KV Cache Pool Utilization",
+                        "type": "singlestat",
+                        "valueName": "current",
+                        "valueFontSize": "100%",
+                        "format": "percentunit",
+                        "thresholds": "0.1,0.6",
+                        "colorBackground": true,
+                        "colorValue": false,
+                        "colors": [
+                            "#E02525",
+                            "#FF9900",
+                            "#73C586"
+                        ],
+                        "sparkline": {
+                            "show": true,
+                            "full": false,
+                            "lineColor": "#FFFFFF",
+                            "fillColor": "rgba(255,255,255,0.15)"
+                        },
+                        "gauge": {
+                            "show": true,
+                            "minValue": 0,
+                            "maxValue": 1,
+                            "thresholdMarkers": true,
+                            "thresholdLabels": false
+                        }
+                    }
+                ],
+                "repeat": null,
+                "showTitle": true,
+                "title": "LLM-D EPP Metrics",
+                "titleSize": "h6"
+            },
+            {
+                "collapse": false,
+                "height": "250px",
+                "panels": [
+                    {
+                        "datasource": "$datasource",
+                        "id": 12,
+                        "span": 12,
+                        "targets": [
+                            {
+                                "expr": "inference_pool_per_pod_queue_size",
+                                "format": "time_series",
+                                "legendFormat": "Pod {{model_server_pod}}",
+                                "legendLink": null
+                            }
+                        ],
+                        "title": "Per-Pod Queue Sizes (EPP View)",
+                        "type": "graph",
+                        "fill": 1,
+                        "linewidth": 2,
+                        "lines": false,
+                        "points": false,
+                        "bars": true,
+                        "stack": false,
+                        "legend": {
+                            "show": true,
+                            "current": true,
+                            "values": true
+                        },
+                        "tooltip": {
+                            "shared": true,
+                            "sort": 2,
+                            "value_type": "individual"
+                        },
+                        "yaxes": [
+                            {
+                                "format": "short",
+                                "label": "Queue Size",
+                                "logBase": 1,
+                                "min": 0,
+                                "show": true
+                            },
+                            {
+                                "format": "short",
+                                "logBase": 1,
+                                "show": false
+                            }
+                        ],
+                        "xaxis": {
+                            "mode": "time",
+                            "show": true
+                        }
+                    }
+                ],
+                "repeat": null,
+                "showTitle": true,
+                "title": "Per-Pod Queue Distribution",
+                "titleSize": "h6"
+            }
+        ],
+        "schemaVersion": 14,
+        "style": "dark",
+        "tags": [
+            "llm",
+            "vllm",
+            "llm-d",
+            "inference",
+            "performance"
+        ],
+        "templating": {
+            "list": [
+                {
+                    "current": {
+                        "text": "default",
+                        "value": "default"
+                    },
+                    "hide": 0,
+                    "label": "Data source",
+                    "name": "datasource",
+                    "options": [],
+                    "query": "prometheus",
+                    "refresh": 1,
+                    "regex": "",
+                    "type": "datasource"
+                },
+                {
+                    "allValue": null,
+                    "current": {
+                        "text": "All",
+                        "value": "$__all"
+                    },
+                    "datasource": "$datasource",
+                    "hide": 0,
+                    "includeAll": true,
+                    "label": "Model",
+                    "multi": false,
+                    "name": "model",
+                    "options": [],
+                    "query": "label_values(kserve_vllm:num_requests_running, llm_isvc_name)",
+                    "refresh": 2,
+                    "regex": "",
+                    "sort": 1,
+                    "type": "query"
+                },
+                {
+                    "allValue": null,
+                    "current": {
+                        "text": "All",
+                        "value": "$__all"
+                    },
+                    "datasource": "$datasource",
+                    "hide": 0,
+                    "includeAll": true,
+                    "label": "Namespace",
+                    "multi": false,
+                    "name": "namespace",
+                    "options": [],
+                    "query": "label_values(kserve_vllm:num_requests_running, namespace)",
+                    "refresh": 2,
+                    "regex": "",
+                    "sort": 1,
+                    "type": "query"
+                }
+            ]
+        },
+        "time": {
+            "from": "now-15m",
+            "to": "now"
+        },
+        "timepicker": {
+            "refresh_intervals": [
+                "5s",
+                "10s",
+                "30s",
+                "1m",
+                "5m",
+                "15m",
+                "30m",
+                "1h"
+            ]
+        },
+        "timezone": "browser",
+        "title": "LLM-D Performance Dashboard",
+        "uid": "llm-d-performance",
+        "version": 1
+    }

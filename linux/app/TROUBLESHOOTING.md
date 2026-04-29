@@ -1,4 +1,4 @@
-# RHAIIS Demo Troubleshooting Guide
+# RHAI Demo Troubleshooting Guide
 
 ## Pre-Installation Issues
 

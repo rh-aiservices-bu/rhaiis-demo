@@ -1,4 +1,4 @@
-# Red Hat AI Inference Server Demo - Testing Checklist
+# Red Hat AI Inference Demo - Testing Checklist
 
 This checklist ensures all components of the RHEL vLLM demo are properly configured and functioning.
 
@@ -46,7 +46,7 @@ This checklist ensures all components of the RHEL vLLM demo are properly configu
 - [ ] tmux session management working
 
 ### vLLM Server Deployment
-- [ ] Red Hat AI Inference Server container pulls successfully
+- [ ] Red Hat AI Inference container pulls successfully
 - [ ] Model downloads without errors
 - [ ] vLLM server starts and listens on port 8000
 - [ ] Server shows "Application startup complete" message

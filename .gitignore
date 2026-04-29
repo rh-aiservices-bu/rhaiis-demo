@@ -1,0 +1,12 @@
+*.log
+*.pid
+*.pyc
+*.backup
+*.bak
+*.tmp
+*.swp
+__pycache__/
+.env
+.DS_Store
+.venv/
+venv/

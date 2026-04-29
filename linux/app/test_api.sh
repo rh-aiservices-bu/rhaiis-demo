@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# RHAIIS Demo API Testing Script
+# RHAI Demo API Testing Script
 # Tests all endpoints with pretty formatted output
 
 # Color codes for pretty output
@@ -79,9 +79,9 @@ make_request() {
 }
 
 # Start of tests
-print_header "${ROCKET} Red Hat AI Inference Server CRM Demo - API Testing Suite"
+print_header "${ROCKET} Red Hat AI Inference CRM Demo - API Testing Suite"
 
-echo -e "${INFO} ${BLUE}Testing API endpoints for RHAIIS CRM Demo${NC}"
+echo -e "${INFO} ${BLUE}Testing API endpoints for RHAI CRM Demo${NC}"
 echo -e "${INFO} ${BLUE}Base URL: $BASE_URL${NC}"
 echo -e "${INFO} ${BLUE}Test Suite Version: 1.0${NC}"
 echo -e "${INFO} ${BLUE}Timestamp: $(date)${NC}"
@@ -377,6 +377,6 @@ echo -e "   • If tests fail: ${YELLOW}./stop_services.sh && ./deploy.sh${NC}"
 echo -e "   • Check troubleshooting guide: ${YELLOW}cat TROUBLESHOOTING.md${NC}"
 echo -e "   • Verify system requirements in README.md"
 
-print_header "${ROCKET} RHAIIS CRM Demo Testing Complete!"
+print_header "${ROCKET} RHAI CRM Demo Testing Complete!"
 
-echo -e "${GREEN}✨ Red Hat AI Inference Server demonstration is ready for use!${NC}\n"
+echo -e "${GREEN}✨ Red Hat AI Inference demonstration is ready for use!${NC}\n"

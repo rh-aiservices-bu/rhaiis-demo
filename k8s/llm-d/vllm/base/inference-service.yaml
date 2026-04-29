@@ -1,0 +1,29 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: vllm
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    automountServiceAccountToken: false
+    maxReplicas: 4
+    minReplicas: 4
+    model:
+      modelFormat:
+        name: vLLM
+      name: ''
+      resources:
+        limits:
+          cpu: '4'
+          memory: 16Gi
+          nvidia.com/mig-3g.71gb: '1'
+        requests:
+          cpu: '4'
+          memory: 16Gi
+          nvidia.com/mig-3g.71gb: '1'
+      runtime: vllm-runtime
+      storageUri: ''
+    tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"

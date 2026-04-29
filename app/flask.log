@@ -1,26 +1,0 @@
-Initializing Granite agent...
-Loading model ibm-granite/granite-3.3-2b-instruct on GPU...
-Fetching 2 files:   0%|          | 0/2 [00:00<?, ?it/s]Fetching 2 files:  50%|█████     | 1/2 [00:04<00:04,  4.21s/it]Fetching 2 files: 100%|██████████| 2/2 [00:04<00:00,  2.10s/it]
-Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards:  50%|█████     | 1/2 [00:00<00:00,  1.41it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00,  2.78it/s]
-Device set to use cuda:0
-Model loaded successfully!
-Granite agent initialized successfully!
-Starting Flask CRM AI Agent Service...
- * Serving Flask app 'app'
- * Debug mode: off
-[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:5000
- * Running on http://172.31.46.217:5000
-[33mPress CTRL+C to quit[0m
-127.0.0.1 - - [05/Aug/2025 17:17:31] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:17:31] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:17:34] "POST /agent/chat HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:17:41] "GET /health HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:17:41] "GET /db/sales HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:17:41] "GET /db/accounts HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:17:41] "GET /db/support HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:17:43] "POST /agent/chat HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:17:58] "POST /agent/chat HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:18:14] "POST /agent/chat HTTP/1.1" 200 -
-127.0.0.1 - - [05/Aug/2025 17:18:29] "POST /agent/chat HTTP/1.1" 200 -
