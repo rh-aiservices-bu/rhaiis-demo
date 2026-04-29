@@ -5,7 +5,7 @@ metadata:
   namespace: demo-llm
   annotations: {}
 spec:
-  replicas: 4
+  replicas: 3
   model:
     uri: ''
     name: ''

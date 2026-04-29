@@ -1,6 +1,6 @@
 # Red Hat AI Inference - llm-d Intelligent Scheduling Benchmark
 
-This benchmark compares vanilla vLLM (round-robin routing) against llm-d (intelligent scheduling) using identical hardware: 4 NVIDIA MIG 3g.71gb GPU slices serving Qwen/Qwen3-4B across 4 replicas.
+This benchmark compares vanilla vLLM (round-robin routing) against llm-d (intelligent scheduling) using identical hardware: 3 NVIDIA MIG 3g.71gb GPU slices serving Qwen/Qwen3-4B across 3 replicas.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ This benchmark compares vanilla vLLM (round-robin routing) against llm-d (intell
 - [llm-d operator](https://github.com/llm-d/llm-d-operator) installed
 - [Gateway API](https://gateway-api.sigs.k8s.io/) CRDs and an implementation (Envoy Gateway, Istio, etc.)
 - `kubectl` or `oc` CLI configured
-- 4 GPU instances available (MIG 3g.71gb or equivalent)
+- 3 GPU instances available (MIG 3g.71gb or equivalent)
 
 > **Note:** This guide uses `kubectl` commands throughout. On OpenShift, you can substitute `oc` for `kubectl`.
 
@@ -135,7 +135,7 @@ Generate prompts sized to exercise KV cache reuse:
 cd test-data-generator/prefix
 python kv-cache-prompt-generator.py \
   --kv-cache-size 350304 \
-  --num-replicas 4 \
+  --num-replicas 3 \
   --prompt-size 8000 \
   --num-pairs 8 \
   --output prompts.csv
@@ -190,7 +190,7 @@ kubectl get pods -n demo-llm -l serving.kserve.io/inferenceservice=qwen-vllm
 
 The deployment creates:
 - **ServingRuntime** (`vllm-runtime`): upstream vLLM with `--max-model-len=16000`
-- **InferenceService** (`qwen-vllm`): 4 replicas, 1 MIG GPU each
+- **InferenceService** (`qwen-vllm`): 3 replicas, 1 MIG GPU each
 - **Service** (`qwen-vllm-lb`): ClusterIP load balancer
 - **PodMonitor**: Prometheus metrics scraping
 
@@ -240,7 +240,7 @@ kubectl get pods -n demo-llm -l app.kubernetes.io/name=qwen
 The llm-d deployment includes:
 - **Gateway** (optional, see Step 0): Standard Gateway API ingress
 - **HardwareProfile**: MIG 3g.71gb GPU resource spec
-- **LLMInferenceService** (`qwen`): 4 replicas with intelligent scoring:
+- **LLMInferenceService** (`qwen`): 3 replicas with intelligent scoring:
   - `prefix-cache-scorer` (weight: 3): Routes to replicas with cached prefix
   - `active-request-scorer` (weight: 2): Balances active requests
   - `queue-scorer` (weight: 2): Avoids overloaded replicas

@@ -10,7 +10,7 @@ Deploy a GPU-accelerated CRM assistant on RHEL 10 using IBM Granite models, vLLM
 
 ### [Kubernetes (llm-d Intelligent Scheduling)](k8s/llm-d/)
 
-Benchmark llm-d's intelligent inference scheduling against vanilla vLLM round-robin routing on any Kubernetes cluster (OpenShift, EKS, AKS, CoreWeave, etc.). Demonstrates how prefix-cache-aware routing delivers higher KV cache hit rates and dramatically lower time-to-first-token latency.
+Benchmark llm-d's intelligent inference scheduling against vanilla vLLM round-robin routing on any Kubernetes cluster (OpenShift, EKS, AKS, CoreWeave, etc.) using 3 GPU replicas. Demonstrates how prefix-cache-aware routing delivers higher KV cache hit rates and dramatically lower time-to-first-token latency.
 
 ## Prerequisites
 
